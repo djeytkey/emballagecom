@@ -1,7 +1,7 @@
 <?php
 /**
- * Plugin Name:       EmballageCom Store
- * Description:       Store-specific tweaks for EmballageCom (minimum order quantities and more).
+ * Plugin Name:       متجر EmballageCom
+ * Description:       إعدادات مخصّصة لمتجر EmballageCom (الحد الأدنى للكمية وغيرها).
  * Version:           1.0.0
  * Author:            EmballageCom
  * Text Domain:       emballagecom-store
@@ -78,14 +78,14 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 
 			printf(
 				'<div class="notice notice-error"><p>%s</p></div>',
-				esc_html__('EmballageCom Store requires WooCommerce to be installed and active.', 'emballagecom-store')
+				esc_html__('يجب تثبيت WooCommerce وتفعيله لتعمل إضافة متجر EmballageCom.', 'emballagecom-store')
 			);
 		}
 
 		public function register_product_metabox(): void {
 			add_meta_box(
 				'emballagecom_min_quantity',
-				__('EmballageCom – Minimum quantity', 'emballagecom-store'),
+				__('EmballageCom — الحد الأدنى للكمية', 'emballagecom-store'),
 				[$this, 'render_minimum_quantity_metabox'],
 				'product',
 				'side',
@@ -102,7 +102,7 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 			wp_enqueue_script('jquery');
 			?>
 			<p>
-				<label for="emballagecom_min_quantity"><strong><?php esc_html_e('Minimum order quantity', 'emballagecom-store'); ?></strong></label>
+				<label for="emballagecom_min_quantity"><strong><?php esc_html_e('الحد الأدنى لكمية الطلب', 'emballagecom-store'); ?></strong></label>
 			</p>
 			<p>
 				<input
@@ -117,7 +117,7 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 				/>
 			</p>
 			<p class="description">
-				<?php esc_html_e('Leave empty to use WooCommerce default (usually 1). Applies to variable products for all variants. Customers cannot buy fewer.', 'emballagecom-store'); ?>
+				<?php esc_html_e('اتركه فارغًا لاستخدام إعداد WooCommerce الافتراضي (غالبًا 1). ينطبق على المنتجات ذات المتغيّرات لجميع الأصناف. لا يمكن للعملاء طلب كمية أقل.', 'emballagecom-store'); ?>
 			</p>
 			<?php
 		}
@@ -257,7 +257,7 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 			wc_add_notice(
 				sprintf(
 					/* translators: 1: product name, 2: minimum quantity */
-					__('The minimum quantity for %1$s is %2$d.', 'emballagecom-store'),
+					__('الحد الأدنى للكمية لـ «%1$s» هو %2$d.', 'emballagecom-store'),
 					wp_strip_all_tags($name),
 					$need
 				),
@@ -297,7 +297,7 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 			wc_add_notice(
 				sprintf(
 					/* translators: 1: product name, 2: minimum quantity */
-					__('The minimum quantity for %1$s is %2$d.', 'emballagecom-store'),
+					__('الحد الأدنى للكمية لـ «%1$s» هو %2$d.', 'emballagecom-store'),
 					wp_strip_all_tags($product->get_name()),
 					$need
 				),
@@ -334,7 +334,7 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 				wc_add_notice(
 					sprintf(
 						/* translators: 1: product name, 2: minimum quantity */
-						__('Adjust your cart: the minimum quantity for %1$s is %2$d.', 'emballagecom-store'),
+						__('يُرجى تعديل السلة: الحد الأدنى للكمية لمنتج «%1$s» هو %2$d.', 'emballagecom-store'),
 						wp_strip_all_tags($product->get_name()),
 						$need
 					),
@@ -352,8 +352,8 @@ register_activation_hook(
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 			deactivate_plugins(plugin_basename(EMBALLAGECOM_STORE_FILE));
 			wp_die(
-				esc_html__('EmballageCom Store requires WooCommerce to be installed and active.', 'emballagecom-store'),
-				esc_html__('Plugin dependency', 'emballagecom-store'),
+				esc_html__('يجب تثبيت WooCommerce وتفعيله لتعمل إضافة متجر EmballageCom.', 'emballagecom-store'),
+				esc_html__('تبعية الإضافة', 'emballagecom-store'),
 				['back_link' => true]
 			);
 		}
