@@ -15,21 +15,6 @@ defined('ABSPATH') || exit;
 
 define('EMBALLAGECOM_STORE_FILE', __FILE__);
 
-register_activation_hook(
-	EMBALLAGECOM_STORE_FILE,
-	static function (): void {
-		if (! class_exists('WooCommerce', false)) {
-			require_once ABSPATH . 'wp-admin/includes/plugin.php';
-			deactivate_plugins(plugin_basename(EMBALLAGECOM_STORE_FILE));
-			wp_die(
-				esc_html__('EmballageCom Store requires WooCommerce to be installed and active.', 'emballagecom-store'),
-				esc_html__('Plugin dependency', 'emballagecom-store'),
-				['back_link' => true]
-			);
-		}
-	}
-);
-
 if (! class_exists('EmballageCom_Store_Plugin')) {
 
 	final class EmballageCom_Store_Plugin {
@@ -46,8 +31,29 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 			return self::$instance;
 		}
 
+		/**
+		 * Uses the active-plugin list (not the WooCommerce class) so activation works even if this
+		 * plugin runs before WooCommerce during the same request.
+		 */
+		public static function is_woocommerce_active(): bool {
+			if (! function_exists('is_plugin_active')) {
+				require_once ABSPATH . 'wp-admin/includes/plugin.php';
+			}
+
+			$slug = 'woocommerce/woocommerce.php';
+
+			if (is_plugin_active($slug)) {
+				return true;
+			}
+
+			return is_multisite() && is_plugin_active_for_network($slug);
+		}
+
+		/**
+		 * Register hooks after all plugins are loaded (load order no longer matters).
+		 */
 		public static function bootstrap(): void {
-			if (! class_exists('WooCommerce', false)) {
+			if (! class_exists('WooCommerce')) {
 				add_action('admin_notices', [self::instance(), 'woocommerce_missing_notice']);
 				return;
 			}
@@ -339,4 +345,19 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 	}
 }
 
-EmballageCom_Store_Plugin::bootstrap();
+register_activation_hook(
+	EMBALLAGECOM_STORE_FILE,
+	static function (): void {
+		if (! EmballageCom_Store_Plugin::is_woocommerce_active()) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+			deactivate_plugins(plugin_basename(EMBALLAGECOM_STORE_FILE));
+			wp_die(
+				esc_html__('EmballageCom Store requires WooCommerce to be installed and active.', 'emballagecom-store'),
+				esc_html__('Plugin dependency', 'emballagecom-store'),
+				['back_link' => true]
+			);
+		}
+	}
+);
+
+add_action('plugins_loaded', [EmballageCom_Store_Plugin::class, 'bootstrap']);
