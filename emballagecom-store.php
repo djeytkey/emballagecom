@@ -69,6 +69,26 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 			add_filter('woocommerce_update_cart_validation', [$p, 'validate_cart_update_minimum'], 10, 4);
 
 			add_action('woocommerce_check_cart_items', [$p, 'validate_cart_before_checkout']);
+
+			// TheGem: hide cart/checkout centered page title strip.
+			add_action('wp_enqueue_scripts', [$p, 'enqueue_thegem_hide_cart_checkout_title'], 20);
+		}
+
+		public function enqueue_thegem_hide_cart_checkout_title(): void {
+			if (! function_exists('is_cart') || ! function_exists('is_checkout')) {
+				return;
+			}
+
+			if (! is_cart() && ! is_checkout()) {
+				return;
+			}
+
+			wp_register_style('emballagecom-store-thegem', false, [], '');
+			wp_enqueue_style('emballagecom-store-thegem');
+			wp_add_inline_style(
+				'emballagecom-store-thegem',
+				'.page-title-block.page-title-alignment-center.page-title-style-1.woocommerce-cart-checkout{display:none!important;}'
+			);
 		}
 
 		public function woocommerce_missing_notice(): void {
