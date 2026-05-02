@@ -70,8 +70,85 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 
 			add_action('woocommerce_check_cart_items', [$p, 'validate_cart_before_checkout']);
 
+			// Shop archive / shop page URL → home (redirect + rewired links).
+			add_action('template_redirect', [$p, 'redirect_shop_to_home'], 0);
+			add_filter('woocommerce_get_shop_page_permalink', [$p, 'filter_shop_page_permalink_home'], 999);
+			add_filter('post_type_archive_link', [$p, 'filter_product_archive_link_home'], 999, 2);
+			add_filter('wp_nav_menu_objects', [$p, 'filter_nav_menu_shop_links'], 999, 2);
+
 			// TheGem: hide cart/checkout centered page title strip.
 			add_action('wp_enqueue_scripts', [$p, 'enqueue_thegem_hide_cart_checkout_title'], 20);
+		}
+
+		public function redirect_shop_to_home(): void {
+			if (is_feed() || is_admin()) {
+				return;
+			}
+
+			if (! function_exists('is_shop') || ! function_exists('wc_get_page_id')) {
+				return;
+			}
+
+			if (! is_shop()) {
+				return;
+			}
+
+			$shop_id    = (int) wc_get_page_id('shop');
+			$front_id   = (int) get_option('page_on_front');
+
+			if ($shop_id > 0 && $front_id > 0 && $shop_id === $front_id) {
+				return;
+			}
+
+			wp_safe_redirect(home_url('/'), 301);
+			exit;
+		}
+
+		public function filter_shop_page_permalink_home($permalink): string {
+			return home_url('/');
+		}
+
+		public function filter_product_archive_link_home(string $link, string $post_type): string {
+			if ('product' === $post_type) {
+				return home_url('/');
+			}
+
+			return $link;
+		}
+
+		/**
+		 * Rewrite menu entries that point at the WooCommerce shop page so href is the homepage.
+		 *
+		 * @param array<int, \WP_Post> $items Sorted menu objects.
+		 * @param object                 $args  Menu wp_nav_menu() args object.
+		 * @return array<int, \WP_Post>
+		 */
+		public function filter_nav_menu_shop_links(array $items, $args): array {
+			$shop_id = function_exists('wc_get_page_id') ? (int) wc_get_page_id('shop') : 0;
+
+			if ($shop_id <= 0) {
+				return $items;
+			}
+
+			$home = home_url('/');
+
+			foreach ($items as $item) {
+				if (empty($item->url)) {
+					continue;
+				}
+
+				if (isset($item->object, $item->object_id) && 'page' === $item->object && (int) $item->object_id === $shop_id) {
+					$item->url = $home;
+
+					continue;
+				}
+
+				if (function_exists('url_to_postid') && (int) url_to_postid((string) $item->url) === $shop_id) {
+					$item->url = $home;
+				}
+			}
+
+			return $items;
 		}
 
 		public function enqueue_thegem_hide_cart_checkout_title(): void {
