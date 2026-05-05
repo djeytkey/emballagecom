@@ -261,13 +261,13 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 			unset($fields['billing']['billing_last_name']);
 
 			if (isset($fields['billing']['billing_first_name']) && is_array($fields['billing']['billing_first_name'])) {
-				$fields['billing']['billing_first_name']['label']    = __('Nom complet', 'emballagecom-store');
-				$fields['billing']['billing_first_name']['class']    = ['form-row-first'];
+				$fields['billing']['billing_first_name']['label']    = __('الاسم الكامل', 'emballagecom-store');
+				$fields['billing']['billing_first_name']['class']    = ['form-row-last'];
 				$fields['billing']['billing_first_name']['priority'] = 60;
 			}
 
 			if (isset($fields['billing']['billing_phone']) && is_array($fields['billing']['billing_phone'])) {
-				$fields['billing']['billing_phone']['class']    = ['form-row-last'];
+				$fields['billing']['billing_phone']['class']    = ['form-row-first'];
 				$fields['billing']['billing_phone']['priority'] = 61;
 			}
 
@@ -282,7 +282,7 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 
 			$cities = $this->get_ozon_cities();
 			if (! empty($cities)) {
-				$options = ['' => __('Choisissez votre ville', 'emballagecom-store')];
+				$options = ['' => __('اختر مدينتك', 'emballagecom-store')];
 
 				foreach ($cities as $city) {
 					$options[$city['name']] = $city['name'];
