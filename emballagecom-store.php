@@ -256,8 +256,8 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 
 		public function customize_checkout_city_field(array $fields): array {
 			// Morocco-only checkout: remove unused address fields.
-			unset($fields['billing']['billing_country'], $fields['billing']['billing_address_2'], $fields['billing']['billing_state'], $fields['billing']['billing_postcode'], $fields['billing']['billing_email']);
-			unset($fields['shipping']['shipping_country'], $fields['shipping']['shipping_address_2'], $fields['shipping']['shipping_state'], $fields['shipping']['shipping_postcode']);
+			unset($fields['billing']['billing_country'], $fields['billing']['billing_address_2'], $fields['billing']['billing_state'], $fields['billing']['billing_postcode'], $fields['billing']['billing_email'], $fields['billing']['billing_company']);
+			unset($fields['shipping']['shipping_country'], $fields['shipping']['shipping_address_2'], $fields['shipping']['shipping_state'], $fields['shipping']['shipping_postcode'], $fields['shipping']['shipping_company']);
 
 			if (! isset($fields['billing']['billing_city']) || ! is_array($fields['billing']['billing_city'])) {
 				return $fields;
