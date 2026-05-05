@@ -313,6 +313,10 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 
 			wp_enqueue_script('selectWoo');
 			wp_enqueue_style('select2');
+			wp_add_inline_style(
+				'select2',
+				'@media (max-width: 767px){.woocommerce-checkout form .form-row-first,.woocommerce-checkout form .form-row-last{float:none;width:100%;margin-right:0;margin-left:0;}}'
+			);
 			$script = <<<'JS'
 jQuery(function($){
 	function initCity(){
