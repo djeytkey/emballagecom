@@ -20,6 +20,10 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 	final class EmballageCom_Store_Plugin {
 
 		private const META_KEY = '_emballagecom_min_quantity';
+		private const OZON_CITIES_ENDPOINT = 'https://api.ozonexpress.ma/cities';
+		private const OZON_CITIES_TRANSIENT = 'emballagecom_ozon_cities';
+		private const OZON_CITIES_TTL = 3600;
+		private const DELIVERY_FEE_LABEL = 'رسوم التوصيل';
 
 		private static ?self $instance = null;
 
@@ -78,6 +82,9 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 
 			// TheGem: hide cart/checkout centered page title strip.
 			add_action('wp_enqueue_scripts', [$p, 'enqueue_thegem_hide_cart_checkout_title'], 20);
+			add_filter('woocommerce_checkout_fields', [$p, 'customize_checkout_city_field']);
+			add_action('wp_enqueue_scripts', [$p, 'enqueue_checkout_city_select2'], 30);
+			add_action('woocommerce_cart_calculate_fees', [$p, 'add_delivery_fee_from_city'], 20);
 		}
 
 		public function redirect_shop_to_home(): void {
@@ -166,6 +173,203 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 				'emballagecom-store-thegem',
 				'.page-title-block.page-title-alignment-center.page-title-style-1.woocommerce-cart-checkout{display:none!important;}'
 			);
+		}
+
+		/**
+		 * @return array<string,array{name:string,delivered_price:float}>
+		 */
+		public function get_ozon_cities(): array {
+			$cached = get_transient(self::OZON_CITIES_TRANSIENT);
+
+			if (is_array($cached)) {
+				return $cached;
+			}
+
+			$response = wp_remote_get(
+				self::OZON_CITIES_ENDPOINT,
+				[
+					'timeout' => 15,
+					'headers' => [
+						'Accept' => 'application/json',
+					],
+				]
+			);
+
+			if (is_wp_error($response)) {
+				return [];
+			}
+
+			$body = wp_remote_retrieve_body($response);
+
+			if (! is_string($body) || $body === '') {
+				return [];
+			}
+
+			$data = json_decode($body, true);
+
+			if (! is_array($data) || ! isset($data['CITIES']) || ! is_array($data['CITIES'])) {
+				return [];
+			}
+
+			$cities = [];
+
+			foreach ($data['CITIES'] as $row) {
+				if (! is_array($row) || ! isset($row['NAME']) || ! isset($row['DELIVERED-PRICE'])) {
+					continue;
+				}
+
+				$name = trim((string) $row['NAME']);
+
+				if ($name === '') {
+					continue;
+				}
+
+				$normalized_key = $this->normalize_city_key($name);
+
+				$cities[$normalized_key] = [
+					'name'            => $name,
+					'delivered_price' => (float) $row['DELIVERED-PRICE'],
+				];
+			}
+
+			if (! empty($cities)) {
+				set_transient(self::OZON_CITIES_TRANSIENT, $cities, self::OZON_CITIES_TTL);
+			}
+
+			return $cities;
+		}
+
+		private function normalize_city_key(string $city): string {
+			$city = trim($city);
+
+			if ($city === '') {
+				return '';
+			}
+
+			if (function_exists('mb_strtolower')) {
+				return mb_strtolower($city, 'UTF-8');
+			}
+
+			return strtolower($city);
+		}
+
+		public function customize_checkout_city_field(array $fields): array {
+			if (! isset($fields['billing']['billing_city']) || ! is_array($fields['billing']['billing_city'])) {
+				return $fields;
+			}
+
+			$cities = $this->get_ozon_cities();
+
+			if (empty($cities)) {
+				return $fields;
+			}
+
+			$options = ['' => __('Choisissez votre ville', 'emballagecom-store')];
+
+			foreach ($cities as $city) {
+				$options[$city['name']] = $city['name'];
+			}
+
+			$fields['billing']['billing_city']['type']        = 'select';
+			$fields['billing']['billing_city']['options']     = $options;
+			$fields['billing']['billing_city']['required']    = true;
+			$fields['billing']['billing_city']['input_class'] = ['wc-enhanced-select'];
+			$fields['billing']['billing_city']['priority']    = 70;
+
+			return $fields;
+		}
+
+		public function enqueue_checkout_city_select2(): void {
+			if (! function_exists('is_checkout') || ! is_checkout()) {
+				return;
+			}
+
+			wp_enqueue_script('selectWoo');
+			wp_enqueue_style('select2');
+			$script = <<<'JS'
+jQuery(function($){
+	function initCity(){
+		var $city = $('#billing_city');
+		if (!$city.length) {
+			return;
+		}
+		if ($city.data('select2')) {
+			$city.select2('destroy');
+		}
+		$city.selectWoo({ width: '100%' });
+	}
+
+	initCity();
+	$(document.body).on('updated_checkout', initCity);
+	$(document.body).on('change', '#billing_city', function(){
+		$(document.body).trigger('update_checkout');
+	});
+});
+JS;
+
+			wp_add_inline_script(
+				'selectWoo',
+				$script
+			);
+		}
+
+		private function get_selected_checkout_city(): string {
+			$city = '';
+			$post_data = WC()->session ? (string) WC()->session->get('post_data') : '';
+
+			if ($post_data !== '') {
+				parse_str($post_data, $parsed);
+
+				if (is_array($parsed) && isset($parsed['billing_city'])) {
+					$city = (string) $parsed['billing_city'];
+				}
+			}
+
+			if ($city === '' && isset($_POST['billing_city'])) {
+				$city = (string) wp_unslash($_POST['billing_city']);
+			}
+
+			if ($city === '' && WC()->customer instanceof WC_Customer) {
+				$city = (string) WC()->customer->get_billing_city();
+			}
+
+			return trim($city);
+		}
+
+		public function add_delivery_fee_from_city(WC_Cart $cart): void {
+			if (is_admin() && ! wp_doing_ajax()) {
+				return;
+			}
+
+			if (! function_exists('is_checkout') || (! is_checkout() && ! wp_doing_ajax())) {
+				return;
+			}
+
+			$city = $this->get_selected_checkout_city();
+
+			if ($city === '') {
+				return;
+			}
+
+			$cities = $this->get_ozon_cities();
+
+			if (empty($cities)) {
+				return;
+			}
+
+			$key = $this->normalize_city_key($city);
+
+			if (! isset($cities[$key])) {
+				return;
+			}
+
+			$fee = (float) $cities[$key]['delivered_price'];
+
+			if ($fee <= 0) {
+				return;
+			}
+
+			$cart->add_fee(self::DELIVERY_FEE_LABEL, $fee, false);
 		}
 
 		public function woocommerce_missing_notice(): void {
