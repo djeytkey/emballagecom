@@ -1,7 +1,7 @@
 <?php
 /**
- * Plugin Name:       متجر EmballageCom
- * Description:       إعدادات مخصّصة لمتجر EmballageCom (الحد الأدنى للكمية وغيرها).
+ * Plugin Name:       EmballageCom Store
+ * Description:       EmballageCom Store Customizations
  * Version:           1.0.0
  * Author:            EmballageCom
  * Text Domain:       emballagecom-store
