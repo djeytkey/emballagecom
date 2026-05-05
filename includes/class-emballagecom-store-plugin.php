@@ -85,6 +85,7 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 			add_filter('woocommerce_checkout_posted_data', [$p, 'force_checkout_country_to_morocco']);
 			add_action('wp_enqueue_scripts', [$p, 'enqueue_checkout_city_select2'], 30);
 			add_action('woocommerce_cart_calculate_fees', [$p, 'add_delivery_fee_from_city'], 20);
+			add_action('woocommerce_order_status_processing', [$p, 'maybe_send_whatsapp_order_notification'], 10, 2);
 			add_action('woocommerce_thankyou', [$p, 'maybe_send_whatsapp_on_thankyou'], 20, 1);
 		}
 
