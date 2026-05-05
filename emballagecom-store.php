@@ -279,7 +279,18 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 			$fields['billing']['billing_city']['options']     = $options;
 			$fields['billing']['billing_city']['required']    = true;
 			$fields['billing']['billing_city']['input_class'] = ['wc-enhanced-select'];
+			$fields['billing']['billing_city']['class']       = ['form-row-first'];
 			$fields['billing']['billing_city']['priority']    = 70;
+
+			if (isset($fields['billing']['billing_phone']) && is_array($fields['billing']['billing_phone'])) {
+				$fields['billing']['billing_phone']['class']    = ['form-row-last'];
+				$fields['billing']['billing_phone']['priority'] = 71;
+			}
+
+			if (isset($fields['billing']['billing_address_1']) && is_array($fields['billing']['billing_address_1'])) {
+				$fields['billing']['billing_address_1']['class']    = ['form-row-wide'];
+				$fields['billing']['billing_address_1']['priority'] = 999;
+			}
 
 			return $fields;
 		}
