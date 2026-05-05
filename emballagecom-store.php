@@ -83,6 +83,7 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 			// TheGem: hide cart/checkout centered page title strip.
 			add_action('wp_enqueue_scripts', [$p, 'enqueue_thegem_hide_cart_checkout_title'], 20);
 			add_filter('woocommerce_checkout_fields', [$p, 'customize_checkout_city_field']);
+			add_filter('woocommerce_checkout_posted_data', [$p, 'force_checkout_country_to_morocco']);
 			add_action('wp_enqueue_scripts', [$p, 'enqueue_checkout_city_select2'], 30);
 			add_action('woocommerce_cart_calculate_fees', [$p, 'add_delivery_fee_from_city'], 20);
 		}
@@ -254,6 +255,10 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 		}
 
 		public function customize_checkout_city_field(array $fields): array {
+			// Morocco-only checkout: remove unused address fields.
+			unset($fields['billing']['billing_country'], $fields['billing']['billing_address_2'], $fields['billing']['billing_state'], $fields['billing']['billing_postcode'], $fields['billing']['billing_email']);
+			unset($fields['shipping']['shipping_country'], $fields['shipping']['shipping_address_2'], $fields['shipping']['shipping_state'], $fields['shipping']['shipping_postcode']);
+
 			if (! isset($fields['billing']['billing_city']) || ! is_array($fields['billing']['billing_city'])) {
 				return $fields;
 			}
@@ -277,6 +282,13 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 			$fields['billing']['billing_city']['priority']    = 70;
 
 			return $fields;
+		}
+
+		public function force_checkout_country_to_morocco(array $data): array {
+			$data['billing_country']  = 'MA';
+			$data['shipping_country'] = 'MA';
+
+			return $data;
 		}
 
 		public function enqueue_checkout_city_select2(): void {
