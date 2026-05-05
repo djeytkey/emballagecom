@@ -313,9 +313,11 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 
 			wp_enqueue_script('selectWoo');
 			wp_enqueue_style('select2');
+			wp_register_style('emballagecom-store-checkout', false, [], '');
+			wp_enqueue_style('emballagecom-store-checkout');
 			wp_add_inline_style(
-				'select2',
-				'@media (max-width: 767px){.woocommerce-checkout form .form-row-first,.woocommerce-checkout form .form-row-last{float:none;width:100%;margin-right:0;margin-left:0;}}'
+				'emballagecom-store-checkout',
+				'@media (max-width: 767px){.woocommerce-checkout .col2-set .col-1,.woocommerce-checkout .col2-set .col-2{float:none!important;width:100%!important;}.woocommerce-checkout form .form-row,.woocommerce-checkout form .form-row-first,.woocommerce-checkout form .form-row-last,.woocommerce-page.woocommerce-checkout form .form-row,.woocommerce-page.woocommerce-checkout form .form-row-first,.woocommerce-page.woocommerce-checkout form .form-row-last{float:none!important;display:block!important;clear:both!important;width:100%!important;max-width:100%!important;margin-left:0!important;margin-right:0!important;}}'
 			);
 			$script = <<<'JS'
 jQuery(function($){
