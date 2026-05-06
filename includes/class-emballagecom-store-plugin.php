@@ -12,6 +12,7 @@ require_once __DIR__ . '/traits/trait-emballagecom-store-checkout.php';
 require_once __DIR__ . '/traits/trait-emballagecom-store-admin.php';
 require_once __DIR__ . '/traits/trait-emballagecom-store-quantity.php';
 require_once __DIR__ . '/traits/trait-emballagecom-store-whatsapp.php';
+require_once __DIR__ . '/traits/trait-emballagecom-store-genevnotify-settings.php';
 
 if (! class_exists('EmballageCom_Store_Plugin')) {
 	final class EmballageCom_Store_Plugin {
@@ -20,6 +21,7 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 		use EmballageCom_Store_Admin_Trait;
 		use EmballageCom_Store_Quantity_Trait;
 		use EmballageCom_Store_Whatsapp_Trait;
+		use EmballageCom_Store_Genevnotify_Settings_Trait;
 
 		private const META_KEY = '_emballagecom_min_quantity';
 		private const OZON_CITIES_ENDPOINT = 'https://api.ozonexpress.ma/cities';
@@ -87,6 +89,9 @@ if (! class_exists('EmballageCom_Store_Plugin')) {
 			add_action('woocommerce_cart_calculate_fees', [$p, 'add_delivery_fee_from_city'], 20);
 			add_action('woocommerce_order_status_changed', [$p, 'maybe_send_whatsapp_on_status_changed'], 20, 4);
 			add_action('woocommerce_thankyou', [$p, 'maybe_send_whatsapp_on_thankyou'], 20, 1);
+
+			add_action('admin_menu', [$p, 'register_emballagecom_admin_menu']);
+			add_action('admin_init', [$p, 'register_genevnotify_settings']);
 		}
 
 		public function woocommerce_missing_notice(): void {

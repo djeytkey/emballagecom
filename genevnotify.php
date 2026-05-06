@@ -13,9 +13,8 @@ class GeneVNotify {
     private $credentials_option = 'genevnotify_api_credentials';
 
    public function __construct() {
-    add_action('admin_menu', [$this, 'add_settings_page']);
-    add_action('admin_init', [$this, 'register_settings']);
-add_action('admin_menu', [$this, 'add_batch_tool_page']);
+    // Réglages WhatsApp / templates : menu EmballageCom (plugin EmballageCom Store).
+    add_action('admin_menu', [$this, 'add_batch_tool_page']);
 
     // First generate OTP
     add_action('woocommerce_order_status_changed', [$this, 'generate_otp_on_status_change'], 10, 4);
@@ -102,91 +101,6 @@ public function generate_otp_on_status_change($order_id, $old_status, $new_statu
 }
 
 
-    public function add_settings_page() {
-        add_options_page('GeneVNotify Settings', 'GeneVNotify', 'manage_options', 'genevnotify', [$this, 'settings_page_html']);
-    }
-
-    public function register_settings() {
-        register_setting('genevnotify_settings_group', $this->option_name);
-        register_setting('genevnotify_settings_group', $this->credentials_option);
-    }
-
-    public function settings_page_html() {
-        $statuses = wc_get_order_statuses();
-        $settings = get_option($this->option_name, []);
-        $credentials = get_option($this->credentials_option, ['phone_number_id' => '', 'access_token' => '']);
-        $register = isset($settings['user_register']) ? $settings['user_register'] : ['enabled' => 'no', 'template' => '', 'variables' => '', 'language' => 'ar'];
-        ?>
-        <div class="wrap">
-            <h1>GeneVNotify Settings</h1>
-            <form method="post" action="options.php">
-                <?php settings_fields('genevnotify_settings_group'); ?>
-
-                <h2>New User Registration Notification</h2>
-                <div style="border: 1px solid #ddd; padding: 16px; border-radius: 8px; background: #f1f1f1; margin-bottom: 20px; max-width: 600px;">
-                    <label><strong>Enable Notification:</strong></label><br>
-                    <select name="<?php echo $this->option_name; ?>[user_register][enabled]">
-                        <option value="yes" <?php selected($register['enabled'], 'yes'); ?>>Yes</option>
-                        <option value="no" <?php selected($register['enabled'], 'no'); ?>>No</option>
-                    </select><br><br>
-
-                    <label><strong>Template Name:</strong></label><br>
-                    <input type="text" name="<?php echo $this->option_name; ?>[user_register][template]" value="<?php echo esc_attr($register['template']); ?>" class="small-text" style="width: 100%; max-width: 100%;" /><br><br>
-
-                    <label><strong>Variables (comma separated):</strong></label><br>
-                    <input type="text" name="<?php echo $this->option_name; ?>[user_register][variables]" value="<?php echo esc_attr($register['variables']); ?>" class="small-text" style="width: 100%; max-width: 100%;" /><br><br>
-
-                    <label><strong>Language (e.g., ar, en):</strong></label><br>
-                    <input type="text" name="<?php echo $this->option_name; ?>[user_register][language]" value="<?php echo esc_attr($register['language']); ?>" class="small-text" style="width: 100%; max-width: 100%;" />
-                </div>
-
-                <h2>API Credentials</h2>
-                <table class="form-table">
-                    <tr valign="top">
-                        <th scope="row">Phone Number ID</th>
-                        <td><input type="text" name="<?php echo $this->credentials_option; ?>[phone_number_id]" value="<?php echo esc_attr($credentials['phone_number_id']); ?>" class="small-text" style="width: 100%; max-width: 100%;" /></td>
-                    </tr>
-                    <tr valign="top">
-                        <th scope="row">Access Token</th>
-                        <td><input type="text" name="<?php echo $this->credentials_option; ?>[access_token]" value="<?php echo esc_attr($credentials['access_token']); ?>" class="small-text" style="width: 100%; max-width: 100%;" /></td>
-                    </tr>
-                </table>
-
-                <h2>Status-Based Message Templates</h2>
-                <p>You can use variables: <code>{{code_otp}}, {{customer_name}}, {{order_id}}, {{shipping_method}}, {{tracking_number}}, {{wp-first-name}}, {{post-_wcpdf_invoice_number}}, {{post-_flotracknumber_link}}, {{post-smsa_awb_no_link}}</code></p>
-                <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-                    <?php foreach ($statuses as $key => $label): 
-                        $status_key = str_replace('wc-', '', $key);
-                        $template = isset($settings[$status_key]['template']) ? $settings[$status_key]['template'] : '';
-                        $variables = isset($settings[$status_key]['variables']) ? $settings[$status_key]['variables'] : '';
-                        $language = isset($settings[$status_key]['language']) ? $settings[$status_key]['language'] : 'ar';
-                        $enabled = isset($settings[$status_key]['enabled']) ? $settings[$status_key]['enabled'] : 'no';
-                        ?>
-                        <div style="flex: 1 1 calc(33.333% - 20px); min-width: 300px; border: 1px solid #ddd; padding: 16px; border-radius: 8px; background: #f9f9f9;">
-                            <h3 style="margin-top: 0;">📦 <?php echo esc_html($label); ?></h3>
-                            <label><strong>Enable Notification:</strong></label><br>
-                            <select name="<?php echo $this->option_name; ?>[<?php echo $status_key; ?>][enabled]">
-                                <option value="yes" <?php selected($enabled, 'yes'); ?>>Yes</option>
-                                <option value="no" <?php selected($enabled, 'no'); ?>>No</option>
-                            </select><br><br>
-
-                            <label><strong>Template Name:</strong></label><br>
-                            <input type="text" name="<?php echo $this->option_name; ?>[<?php echo $status_key; ?>][template]" value="<?php echo esc_attr($template); ?>" class="small-text" style="width: 100%; max-width: 100%;" /><br><br>
-
-                            <label><strong>Variables (comma separated):</strong></label><br>
-                            <input type="text" name="<?php echo $this->option_name; ?>[<?php echo $status_key; ?>][variables]" value="<?php echo esc_attr($variables); ?>" class="small-text" style="width: 100%; max-width: 100%;" /><br><br>
-
-                            <label><strong>Language (e.g., ar, en):</strong></label><br>
-                            <input type="text" name="<?php echo $this->option_name; ?>[<?php echo $status_key; ?>][language]" value="<?php echo esc_attr($language); ?>" class="small-text" style="width: 100%; max-width: 100%;" />
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-                <br>
-                <?php submit_button(); ?>
-            </form>
-        </div>
-        <?php
-    }
 
      public function send_registration_message($user_id) {
         $settings = get_option($this->option_name, []);
