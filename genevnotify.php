@@ -1,12 +1,16 @@
 <?php
-/*
-Plugin Name: GeneVNotify
-Description: Sends WhatsApp notifications when WooCommerce order statuses change and on new user registration.
-Version: 2.2
-Author: EL GENEVSKY
-*/
+/**
+ * Référence / inspiration uniquement — ce fichier n’est pas une extension WordPress.
+ *
+ * Ne pas ajouter d’en-tête « Plugin Name » et ne pas l’activer dans l’admin. La logique
+ * métier et les réglages sont à porter dans EmballageCom Store (menu EmballageCom, etc.).
+ *
+ * @package EmballageCom_Store
+ */
 
-if (!defined('ABSPATH')) exit;
+if (! defined('ABSPATH')) {
+	exit;
+}
 
 class GeneVNotify {
     private $option_name = 'genevnotify_settings';
@@ -327,4 +331,4 @@ $whatsapp_message = "تحول الطلب إلى: $label\nالتفاصيل:\n" . 
 
 }
 
-new GeneVNotify();
+// Intentionnellement non instancié : copie de référence seulement (voir docblock du fichier).

@@ -2,7 +2,7 @@
 /**
  * Admin: EmballageCom menu + GeneVNotify (WhatsApp templates & API) settings.
  *
- * Persists the same options as {@see GeneVNotify}: `genevnotify_settings`, `genevnotify_api_credentials`.
+ * Persists options compatible with the reference file `genevnotify.php`: `genevnotify_settings`, `genevnotify_api_credentials`.
  *
  * @package EmballageCom_Store
  */
